@@ -1,5 +1,5 @@
 const express = require('express');
-const { getAllReservations,getAllParkings , getAllUsers ,createUser, authenticateUser ,getParkingDetails, makeReservation, getUserReservations ,searchParkingByName } = require('./queries');
+const { getUserById,getUserIdByEmail, getBusInfoByParkingID , getBikeInfoByParkingID ,  getCarInfoByParkingID, getReviewsByParkingID, getServicesByParkingID,getAllReservationsByEmail, getAllReservations,getAllParkings , getAllUsers ,createUser, authenticateUser ,getParkingDetails, makeReservation, getUserReservations ,searchParkingByKeyword } = require('./queries');
 const path = require('path'); // Déplacez cette ligne vers le haut
 
 const app = express();
@@ -31,6 +31,39 @@ app.post('/register', (req, res) => {
 });
 
 
+app.get('/user/id', (req, res) => {
+    const email = req.query.email; // Récupérer l'adresse email à partir de la requête URL
+    getUserIdByEmail(email, (err, user) => {
+        if (err) {
+            res.status(500).json({ error: 'Erreur lors de la récupération des données de l\'utilisateur.' });
+            return;
+        }
+        if (!user) {
+            res.status(404).json({ message: 'Aucun utilisateur trouvé avec cette adresse email.' });
+            return;
+        }
+        res.status(200).json(user);
+    });
+});
+
+
+app.get('/userId', (req, res) => {
+    const id = req.query.id; // Récupérer l'ID utilisateur à partir de la requête URL
+    getUserById(id, (err, user) => {
+        if (err) {
+            res.status(500).json({ error: 'Erreur lors de la récupération des données de l\'utilisateur.' });
+            return;
+        }
+        if (!user) {
+            res.status(404).json({ message: 'Aucun utilisateur trouvé avec cet ID.' });
+            return;
+        }
+        res.status(200).json(user);
+    });
+});
+
+
+
 
 // Route pour l'authentification de l'utilisateur
 app.post('/login', (req, res) => {
@@ -55,9 +88,8 @@ app.get('/parkings/:imageName', (req, res) => {
     res.sendFile(imagePath);
 });
 
-// Autres routes...
-
 app.use(express.static('images/parkings'));
+
 app.get('/parkings', (req, res) => {
     getAllParkings((err, parkings) => {
         if (err) {
@@ -67,13 +99,12 @@ app.get('/parkings', (req, res) => {
     });
 });
 
-// route pour search parking by name 
 app.get('/parkingSearch', (req, res) => {
-    const parkingName = req.query.name; 
-    if (!parkingName) {
-        return res.status(400).json({ error: 'Nom du parking non fourni dans la requête.' });
+    const keyword = req.query.keyword; 
+    if (!keyword) {
+        return res.status(400).json({ error: 'Mot clé de recherche non fourni dans la requête.' });
     }
-    searchParkingByName(parkingName, (err, parkings) => {
+    searchParkingByKeyword(keyword, (err, parkings) => { 
         if (err) {
             return res.status(500).json({ error: 'Erreur lors de la recherche des parkings.' });
         }
@@ -81,7 +112,6 @@ app.get('/parkingSearch', (req, res) => {
     });
 });
 
-// Route pour afficher les détails d'un parking
 app.get('/parking/:id', (req, res) => {
     const parkingId = req.params.id;
     getParkingDetails(parkingId, (err, parking) => {
@@ -95,6 +125,61 @@ app.get('/parking/:id', (req, res) => {
     });
 });
 
+app.get('/services/:parkingID', (req, res) => {
+    const parkingID = req.params.parkingID;
+    if (!parkingID) {
+        return res.status(400).json({ error: 'ID du parking non fourni dans la requête.' });
+    }
+    getServicesByParkingID(parkingID, (err, services) => {
+        if (err) {
+            return res.status(500).json({ error: 'Erreur lors de la récupération des services.' });
+        }
+        res.json(services);
+    });
+});
+app.get('/parkingReviews/:id', (req, res) => {
+    const parkingID = req.params.id;
+    if (!parkingID) {
+        return res.status(400).json({ error: 'Parking ID not provided in the request.' });
+    }
+
+    getReviewsByParkingID(parkingID, (err, reviews) => {
+        if (err) {
+            return res.status(500).json({ error: 'Error retrieving reviews.' });
+        }
+        res.json(reviews);
+    });
+});
+
+app.get('/carInfo/:parkingID', (req, res) => {
+    const parkingID = req.params.parkingID; 
+    getCarInfoByParkingID(parkingID, (err, carInfo) => {
+        if (err) {
+            return res.status(500).json({ error: 'Error retrieving car info.' });
+        }
+        res.json(carInfo);
+    });
+});
+
+app.get('/bikeInfo/:parkingID', (req, res) => {
+    const parkingID = req.params.parkingID; 
+    getBikeInfoByParkingID(parkingID, (err, bikeInfo) => {
+        if (err) {
+            return res.status(500).json({ error: 'Error retrieving bike info.' });
+        }
+        res.json(bikeInfo);
+    });
+});
+
+app.get('/busInfo/:parkingID', (req, res) => {
+    const parkingID = req.params.parkingID; 
+    getBusInfoByParkingID(parkingID, (err, busInfo) => {
+        if (err) {
+            return res.status(500).json({ error: 'Error retrieving bus info.' });
+        }
+        res.json(busInfo);
+    });
+});
 
 //-----------------------------------------Reservations Routes ----------------------------------
 // Route pour get all reservation 
@@ -106,7 +191,18 @@ app.get('/AllReservations', (req, res) => {
         res.json(reservations);
     });
 });
-
+// Route pour get all reservation by Email user 
+app.get('/reservationsByEmail/:email', (req, res) => {
+    const emailUser = req.params.email;
+    getAllReservationsByEmail(emailUser, (err, reservations) => {
+        if (err) {
+            console.error('Erreur lors de la récupération des réservations :', err);
+            res.status(500).json({ error: 'Erreur lors de la récupération des réservations' });
+        } else {
+            res.status(200).json(reservations);
+        }
+    });
+});
 // Route pour effectuer une réservation
 app.post('/makeReservation', function (req, res) {
     const reservationData = req.body; 
