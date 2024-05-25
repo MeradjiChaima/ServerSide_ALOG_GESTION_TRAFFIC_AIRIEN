@@ -5,6 +5,7 @@ const app = express();
 const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 
+
 app.get('/flights', (req, res) => {
     getFlights((err, flights) => {
         if (err) {
@@ -48,7 +49,8 @@ app.get('/planes_data', (req, res) => {
 });
 
 
-const PORT = process.env.PORT || 3001;
+
+const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
     console.log(`Serveur en écoute sur le port ${PORT}`);
 });
