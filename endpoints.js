@@ -2,6 +2,8 @@ const express = require('express');
 const { getFlights} = require('./queriesFlights');
 const { getPlanes, getPlanePaths , getPlaneData} = require('./queriesPlanes');
 const app = express();
+const cors = require('cors');
+app.use(cors());
 const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 
